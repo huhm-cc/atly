@@ -1,8 +1,10 @@
 plugins { id 'com.android.application' }
 def runNumber = Integer.parseInt(System.getenv('GITHUB_RUN_NUMBER') ?: '1')
+def ksPath = System.getenv('ATLY_KEYSTORE_PATH')
 android {
     namespace 'cc.huhm.atly'
     compileSdk 34
+    buildFeatures { buildConfig true }
     defaultConfig {
         applicationId 'cc.huhm.atly'
         minSdk 26
@@ -10,10 +12,21 @@ android {
         versionCode runNumber
         versionName "1.0.${runNumber}"
     }
+    signingConfigs {
+        atly {
+            if (ksPath) {
+                storeFile file(ksPath)
+                storeType 'pkcs12'
+                storePassword System.getenv('ATLY_KEYSTORE_PASSWORD') ?: 'atly-release-2026'
+                keyAlias 'atly'
+                keyPassword System.getenv('ATLY_KEYSTORE_PASSWORD') ?: 'atly-release-2026'
+            }
+        }
+    }
     buildTypes {
         release {
             minifyEnabled false
-            signingConfig signingConfigs.debug
+            signingConfig ksPath ? signingConfigs.atly : signingConfigs.debug
         }
     }
     compileOptions { sourceCompatibility JavaVersion.VERSION_17; targetCompatibility JavaVersion.VERSION_17 }

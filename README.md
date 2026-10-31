@@ -19,3 +19,9 @@ atly 是一個匿名提問服務，跟 NGL 類似，但**絕不會自動發送�
 ## 環境變數（web）
 
 在 Vercel 設定：`TURSO_DATABASE_URL`、`TURSO_AUTH_TOKEN`、`IP_SALT`。
+
+## Android 自動更新
+
+- 手動開啟 App 時檢查 GitHub Releases，有新版會顯示「更新中」、把資料存進 `fetch-data.json`、下載並開啟安裝。
+- 新版啟動時若找到 `fetch-data.json`，顯示「載入資料中，請稍後」，還原後立即刪除該檔並顯示更新內容。
+- Release 需要固定簽章：在 repo Secrets 設定 `ATLY_KEYSTORE_B64`（PKCS12 keystore 的 base64）。

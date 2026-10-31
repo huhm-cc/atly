@@ -14,6 +14,7 @@ import android.webkit.WebResourceRequest;
 import android.webkit.WebSettings;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
+import android.widget.FrameLayout;
 import android.widget.Toast;
 
 import androidx.core.content.FileProvider;
@@ -27,6 +28,8 @@ public class MainActivity extends Activity {
     private static final String HOME = "https://" + HOST + "/inbox";
     private WebView web;
     private SwipeRefreshLayout swipe;
+    private AtlyUpdater updater;
+    private boolean manualLaunch, startupHandled;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -36,7 +39,11 @@ public class MainActivity extends Activity {
         swipe.setColorSchemeColors(0xFFC0573A);
         swipe.addView(web);
         swipe.setOnRefreshListener(() -> web.reload());
-        setContentView(swipe);
+        FrameLayout root = new FrameLayout(this);
+        root.addView(swipe);
+        setContentView(root);
+        updater = new AtlyUpdater(this, web, root);
+        manualLaunch = savedInstanceState == null && Intent.ACTION_MAIN.equals(getIntent().getAction());
 
         WebSettings s = web.getSettings();
         s.setJavaScriptEnabled(true);
@@ -54,7 +61,13 @@ public class MainActivity extends Activity {
                 return true;
             }
             @Override
-            public void onPageFinished(WebView view, String url) { swipe.setRefreshing(false); }
+            public void onPageFinished(WebView view, String url) {
+                swipe.setRefreshing(false);
+                if (startupHandled) return;
+                startupHandled = true;
+                if (updater.hasPendingRestore()) updater.restore(() -> web.reload());   // 安裝後還原資料
+                else if (manualLaunch) updater.checkForUpdate();                         // 手動開啟才檢查更新
+            }
         });
         // only allow pull-to-refresh when at the top
         web.getViewTreeObserver().addOnScrollChangedListener(() -> swipe.setEnabled(web.getScrollY() == 0));
@@ -70,6 +83,9 @@ public class MainActivity extends Activity {
         Uri data = intent.getData();
         if (data != null && HOST.equals(data.getHost())) web.loadUrl(data.toString());
     }
+
+    @Override
+    protected void onResume() { super.onResume(); if (updater != null) updater.onResume(); }
 
     @Override
     protected void onSaveInstanceState(Bundle out) { super.onSaveInstanceState(out); web.saveState(out); }

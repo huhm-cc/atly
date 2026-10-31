@@ -24,6 +24,16 @@ jobs:
       - uses: gradle/actions/setup-gradle@v4
         with:
           gradle-version: '8.7'
+      - name: Prepare signing key
+        env:
+          KS: ${{ secrets.ATLY_KEYSTORE_B64 }}
+        run: |
+          if [ -n "$KS" ]; then
+            echo "$KS" | base64 -d > "$RUNNER_TEMP/atly.p12"
+            echo "ATLY_KEYSTORE_PATH=$RUNNER_TEMP/atly.p12" >> "$GITHUB_ENV"
+          else
+            echo "::warning::ATLY_KEYSTORE_B64 未設定：只驗證建置，不發布 Release"
+          fi
       - name: Build
         run: gradle assembleRelease --no-daemon
       - name: Rename
@@ -32,9 +42,11 @@ jobs:
         with:
           name: atly-apk
           path: android/atly-v1.0.${{ github.run_number }}.apk
-      - uses: softprops/action-gh-release@v2
+      - if: env.ATLY_KEYSTORE_PATH != ''
+        uses: softprops/action-gh-release@v2
         with:
           tag_name: v1.0.${{ github.run_number }}
           name: atly v1.0.${{ github.run_number }}
-          body: atly Android 版。下載 APK 後直接安裝（需允許安裝未知來源應用程式）。
+          body: |
+            ${{ github.event.head_commit.message || 'atly Android 版更新' }}
           files: android/atly-v1.0.${{ github.run_number }}.apk
