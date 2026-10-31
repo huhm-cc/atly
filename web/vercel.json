@@ -1,0 +1,6 @@
+{
+  "rewrites": [
+    { "source": "/@:username", "destination": "/index.html" },
+    { "source": "/inbox", "destination": "/index.html" }
+  ]
+}
