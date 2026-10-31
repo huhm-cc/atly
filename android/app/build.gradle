@@ -1,4 +1,5 @@
 plugins { id 'com.android.application' }
+def runNumber = Integer.parseInt(System.getenv('GITHUB_RUN_NUMBER') ?: '1')
 android {
     namespace 'cc.huhm.atly'
     compileSdk 34
@@ -6,8 +7,8 @@ android {
         applicationId 'cc.huhm.atly'
         minSdk 26
         targetSdk 34
-        versionCode (System.getenv('GITHUB_RUN_NUMBER') ?: '1').toInteger()
-        versionName "1.0.${System.getenv('GITHUB_RUN_NUMBER') ?: '0'}"
+        versionCode runNumber
+        versionName "1.0.${runNumber}"
     }
     buildTypes {
         release {
